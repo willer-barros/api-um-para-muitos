@@ -1,10 +1,35 @@
 import express from 'express';
-import { PrismaClient } from './lib/prisma.ts';
+import { prisma } from './lib/prisma.ts';
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = 3000;
 
 app.use(express.json());
+
+app.post('/api/usuarios', async (req, res) => {
+  try {
+    const { nome, email } = req.body;
+
+    if (!nome || !email) {
+      return res.status(400).json({ erro: "Nome e e-mail são obrigatórios." });
+    }
+
+    const novoUsuario = await prisma.usuario.create({
+      data: {
+        nome,
+        email,
+      },
+    });
+
+    return res.status(201).json(novoUsuario); // 201 Created (H7)
+  } catch (error) {
+    // Trata o erro caso o e-mail já esteja cadastrado (@unique no schema)
+    if (error.code === 'P2002') {
+      return res.status(409).json({ erro: "Este e-mail já está cadastrado." }); // 409 Conflict (H7)
+    }
+    return res.status(500).json({ erro: "Erro ao criar o usuário no servidor." });
+  }
+});
 
 app.post('/api/tarefas', async (req, res) => {
   try {
@@ -60,7 +85,7 @@ app.get('/api/tarefas/:id', async (req, res) => {
     });
 
     if (!tarefa) {
-      return res.status(404).json({ erro: "Tarefa não encontrada ou inativa." }); // Semântica: 404 Not Found (H7)
+      return res.status(404).json({ erro: "Tarefa não encontrada ou inativa." }); 
     }
 
     return res.json(tarefa);
@@ -126,5 +151,5 @@ app.delete('/api/tarefas/:id', async (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`🚀 Servidor TodoList unificado rodando em http://localhost:${PORT}`);
+  console.log(`🇳🇴 🔴⚪🔵Aqui é Halland rodando em http://localhost:${PORT}`);
 });
